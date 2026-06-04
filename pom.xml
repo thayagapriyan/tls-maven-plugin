@@ -205,6 +205,50 @@
                     <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${anypoint.orgId}/maven</url>
                 </repository>
             </distributionManagement>
+            <build>
+                <plugins>
+                    <!--
+                      Exchange treats this maven-plugin JAR as a "custom" asset. The v3 Maven
+                      facade requires exchange-pre-deploy to run FIRST (bound to `validate`, per
+                      MuleSoft docs) so the asset/version is registered before the artifacts are
+                      uploaded. Skipping it makes the plain deploy upload hit the facade with no
+                      precondition satisfied -> HTTP 412 Precondition Failed.
+
+                      Kept inside this profile so ordinary CI builds (test/verify) never invoke
+                      it and never need Exchange credentials.
+                    -->
+                    <!-- Exchange upload is driven by exchange-deploy below, so suppress the
+                         stock maven-deploy-plugin to avoid a duplicate/conflicting upload. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.mule.tools.maven</groupId>
+                        <artifactId>exchange-mule-maven-plugin</artifactId>
+                        <version>0.1.7</version>
+                        <executions>
+                            <execution>
+                                <id>validate</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>exchange-pre-deploy</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>deploy</id>
+                                <phase>deploy</phase>
+                                <goals>
+                                    <goal>exchange-deploy</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 

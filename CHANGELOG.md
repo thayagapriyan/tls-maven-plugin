@@ -10,15 +10,18 @@ stays alongside its history of code.
 
 ## [Unreleased]
 
-### Removed
-- **Dropped the `exchange-mule-maven-plugin` (`exchange-pre-deploy`/`exchange-deploy`) block**
-  from `pom.xml`, along with the now-unused `<type>custom</type>` property. That plugin targets
-  Mule app/policy/connector asset types, not a `maven-plugin` JAR; its `exchange-pre-deploy` goal
-  (bound to `package`) failed with `Artifact could not be resolved` while hunting for
-  `...-preConditions-<timestamp>.json` descriptor artifacts that don't exist for this packaging,
-  breaking the Exchange publish workflow. A `maven-plugin` publishes to Exchange as a standard
-  Maven artifact via the existing `exchange-release` profile's `distributionManagement` + `deploy`.
-  - _Prompt:_ fix the failing Exchange publish (`exchange-pre-deploy ... Artifact could not be resolved`).
+### Fixed
+- **Exchange publish: corrected the `exchange-mule-maven-plugin` wiring** (custom-asset publish).
+  Exchange's v3 Maven facade treats this `maven-plugin` JAR as a custom asset and **requires**
+  `exchange-pre-deploy` to run before upload — without it the deploy upload returns
+  **HTTP 412 Precondition Failed**. The plugin is now declared inside the `exchange-release`
+  profile with `exchange-pre-deploy` bound to **`validate`** (the original binding to `package`
+  failed with `Artifact could not be resolved`) and `exchange-deploy` bound to `deploy`; the stock
+  `maven-deploy-plugin` is skipped in that profile so `exchange-deploy` is the sole uploader.
+  Scoping it to the profile keeps normal CI (`test`/`verify`) free of the plugin and of Exchange
+  credentials. Also dropped the unused `<type>custom</type>` property.
+  - _Prompt:_ fix the failing Exchange publish — first `exchange-pre-deploy ... Artifact could not
+    be resolved`, then `deploy ... 412 Precondition Failed`.
 
 ### Changed
 - **groupId is now the Anypoint org GUID** (`3075da4c-6c1a-46d3-984a-191b16b7e34e`) instead of

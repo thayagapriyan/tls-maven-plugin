@@ -24,10 +24,21 @@ mvn -Pexchange-release clean deploy -Danypoint.orgId=<your-org-guid>
 The `exchange-release` profile (in `pom.xml`) supplies `distributionManagement` pointing at:
 `https://maven.anypoint.mulesoft.com/api/v3/organizations/<orgId>/maven`.
 
-A `maven-plugin` artifact publishes to Exchange as a standard Maven artifact via the normal
-`deploy` lifecycle — no `exchange-mule-maven-plugin` is involved. (That plugin is for Mule
-app/policy/connector asset types, not a `maven-plugin` JAR, and its `exchange-pre-deploy`
-goal fails to resolve its descriptor artifacts when run against this packaging.)
+Exchange treats this `maven-plugin` JAR as a **custom asset**. The v3 Maven facade therefore
+requires `exchange-mule-maven-plugin` (`org.mule.tools.maven`, 0.1.7) with two executions:
+`exchange-pre-deploy` bound to the **`validate`** phase (it registers the asset/version with
+Exchange before any artifact is uploaded) and `exchange-deploy` bound to `deploy` (it performs
+the upload). The plugin lives **inside the `exchange-release` profile** so ordinary CI builds
+(`test`/`verify`) never invoke it and never need Exchange credentials. The stock
+`maven-deploy-plugin` is skipped in that profile so the upload is driven solely by
+`exchange-deploy`.
+
+> **412 Precondition Failed on deploy** means `exchange-pre-deploy` did not run (or could not
+> reach Exchange) — the facade rejects the upload because the asset version was never
+> pre-registered. Ensure the `validate`-phase execution is present and the connected-app
+> credentials resolve. Note: `exchange-pre-deploy` cannot succeed locally without Exchange
+> credentials in `settings.xml`; it round-trips a `preConditions-*.json` through the authenticated
+> `anypoint-exchange-v3` endpoint, so run it from CI (or with real creds).
 
 ## CI publish
 
