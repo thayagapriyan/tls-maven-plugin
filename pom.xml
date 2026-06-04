@@ -120,6 +120,21 @@
                 <version>3.2.5</version>
             </plugin>
             <plugin>
+                <groupId>org.mule.tools.maven</groupId>
+                <artifactId>exchange-mule-maven-plugin</artifactId>
+                <version>0.0.23</version>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>validate-manifest</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-invoker-plugin</artifactId>
                 <version>3.6.1</version>
