@@ -2,6 +2,12 @@
 
 Guidance for Claude Code (and other AI agents) when working in this repository.
 
+> **Start with [AGENTS.md](AGENTS.md).** It is the documentation index for this repo and links
+> the design docs (`idea.md`, `docs/architecture.md`, `docs/HLD.md`, `docs/LLD.md`,
+> `docs/develop.md`, `docs/testing.md`, `docs/deploy.md`). **You must follow the
+> doc-maintenance rule in AGENTS.md**: when you change code, config, workflows, or infra, update
+> the affected docs and append a [CHANGELOG.md](CHANGELOG.md) entry in the same change.
+
 ## What this project is
 
 A custom **Apache Maven plugin** that downloads TLS keystore/truststore files from an **AWS S3

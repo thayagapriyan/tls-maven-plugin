@@ -1,0 +1,64 @@
+name: Publish to Anypoint Exchange
+
+# Publishes the custom plugin as an Exchange asset so Mule apps can resolve it.
+# Runs on a version tag (e.g. v1.0.0) or manually.
+#
+# Required:
+#   Secrets:  EXCHANGE_CLIENT_ID, EXCHANGE_CLIENT_SECRET  (Anypoint connected app, Exchange write)
+#   Variables: ANYPOINT_ORG_ID                            (org/business-group GUID = published groupId)
+#
+# NOTE: Exchange requires groupId = ANYPOINT_ORG_ID. This project's groupId is
+# 'com.priyan.maven', so the publish step rewrites coordinates to the org id before deploy.
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      ANYPOINT_ORG_ID: ${{ vars.ANYPOINT_ORG_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Write Maven settings for Anypoint Exchange
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<'EOF'
+          <settings>
+            <servers>
+              <server>
+                <id>anypoint-exchange-v3</id>
+                <username>~~~Client~~~</username>
+                <password>${env.EXCHANGE_CLIENT_ID}~?~${env.EXCHANGE_CLIENT_SECRET}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+        env:
+          EXCHANGE_CLIENT_ID: ${{ secrets.EXCHANGE_CLIENT_ID }}
+          EXCHANGE_CLIENT_SECRET: ${{ secrets.EXCHANGE_CLIENT_SECRET }}
+
+      - name: Build & test the plugin
+        run: mvn -B clean verify
+
+      # Exchange stores every asset under groupId = orgId. Rewrite the project
+      # groupId (only occurrence: the project coordinate on line ~7) to the org GUID.
+      - name: Set Exchange groupId
+        run: sed -i "s#<groupId>com.priyan.maven</groupId>#<groupId>${ANYPOINT_ORG_ID}</groupId>#" pom.xml
+
+      - name: Deploy to Exchange
+        run: >-
+          mvn -B -Pexchange-release deploy -DskipTests
+          -Danypoint.orgId=${ANYPOINT_ORG_ID}

@@ -125,6 +125,11 @@
                     <settingsFile>src/it/settings.xml</settingsFile>
                     <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
                     <postBuildHookScript>verify</postBuildHookScript>
+                    <!-- aws-download needs a real/LocalStack bucket; it only runs under
+                         the aws-it profile (activated by -Daws.it.bucket). -->
+                    <pomExcludes>
+                        <pomExclude>aws-download/pom.xml</pomExclude>
+                    </pomExcludes>
                     <goals>
                         <goal>clean</goal>
                         <goal>generate-resources</goal>
@@ -158,6 +163,8 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-invoker-plugin</artifactId>
                         <configuration>
+                            <!-- Clear the default exclude so aws-download runs here. -->
+                            <pomExcludes combine.self="override"/>
                             <pomIncludes>
                                 <pomInclude>aws-download/pom.xml</pomInclude>
                             </pomIncludes>
@@ -170,6 +177,32 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+
+        <!--
+          Publishing to Anypoint Exchange.
+
+          IMPORTANT: Exchange stores every asset under groupId = your organization
+          (business group) ID. This plugin's groupId is 'com.priyan.maven', so before
+          a real Exchange publish you must republish it under the org GUID — set
+          -Dexchange.groupId / change <groupId> to the org id, or deploy with
+          deploy-file using the org-id coordinates. The org id also forms the repo URL.
+
+          Activate with: mvn -Pexchange-release deploy
+          Requires a <server id="anypoint-exchange-v3"> (connected app) in settings.xml.
+        -->
+        <profile>
+            <id>exchange-release</id>
+            <properties>
+                <anypoint.orgId>YOUR_ANYPOINT_ORG_ID</anypoint.orgId>
+            </properties>
+            <distributionManagement>
+                <repository>
+                    <id>anypoint-exchange-v3</id>
+                    <name>Anypoint Exchange</name>
+                    <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${anypoint.orgId}/maven</url>
+                </repository>
+            </distributionManagement>
         </profile>
     </profiles>
 </project>

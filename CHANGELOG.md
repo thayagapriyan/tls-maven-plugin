@@ -39,6 +39,26 @@ stays alongside its history of code.
   validation) and the resolver (binary, Base64, mismatch, invalid Base64).
 - Project docs: `idea.md` (enhanced with config reference, error-handling, testing strategy),
   `README.md`, `CLAUDE.md`, `.gitignore`.
+- **Anypoint Exchange publishing** — `exchange-release` profile (`pom.xml`) with
+  `distributionManagement` pointing at the Exchange Maven endpoint, and
+  `.github/workflows/publish-exchange.yml` (build → rewrite groupId to the org GUID → deploy) on
+  a `v*` tag.
+- **LocalStack end-to-end CI** — reworked `.github/workflows/ci.yml` into three jobs:
+  `unit-tests`, `invoker-tests-local`, and `e2e-localstack` (LocalStack service container seeds a
+  keystore and runs the `aws-download` IT via `AWS_ENDPOINT_URL_S3`). Real-AWS/OIDC e2e was
+  removed here and is owned by the consuming Mule app repo.
+- **Documentation set** — `AGENTS.md` (doc index + required doc-maintenance rule), and
+  `docs/architecture.md`, `docs/HLD.md`, `docs/LLD.md`, `docs/develop.md`, `docs/testing.md`,
+  `docs/deploy.md`. `CLAUDE.md` now points agents at `AGENTS.md`.
+
+### Fixed
+- **Stale root `TESTING.md`** reduced to a pointer to `docs/testing.md`. It described a
+  `terraform/` dir and real-AWS/OIDC CI that were moved out of this repo (plugin CI is now
+  LocalStack-only; OIDC/Terraform live in the Mule app repo).
+- **`aws-download` IT ran on plain `mvn install` and failed** (no bucket configured). Added
+  `pomExcludes` for `aws-download/pom.xml` to the base `maven-invoker-plugin` config; the
+  `aws-it` profile clears it with `combine.self="override"`. `mvn clean install` now passes
+  (Passed: 2, Failed: 0) and `aws-download` runs only under `-Daws.it.bucket`.
 
 ### Prompts
 - *"understand idea.md and enhance if you need and create all necessary .md files like
@@ -51,6 +71,17 @@ stays alongside its history of code.
   will keep it inside custom plugin."* → pivoted the whole implementation from Secrets Manager to
   S3; recommended and adopted the environment-resolved credential model (no keys stored in the
   plugin); updated all docs.
+- *"revisit two repo codespace completely ... tls-maven-plugin should publish custom plugin to
+  exchange ... use localstack even in github actions to test that custom plugin working
+  correctly."* → added `exchange-release` profile + `publish-exchange.yml`; reworked `ci.yml`
+  into unit/invoker/`e2e-localstack` (no real AWS in this repo).
+- *"give me steps by steps what should i do to test custom plugin working correctly in my mule
+  app"* (during which `mvn clean install` surfaced the IT bug) → fixed the `aws-download` invoker
+  IT so it is excluded by default and only runs under the `aws-it` profile.
+- *"add different .md file like idea.md, architecture.md, HLD.md, LLD.md, develop.md, testing.md,
+  deploy.md ... add these files reference into agents.md then refer agents.md into claude.md ...
+  also update changelog.md for all session changes history"* → created the `docs/` set + `AGENTS.md`,
+  linked it from `CLAUDE.md`, and recorded this session here.
 
 ---
 
