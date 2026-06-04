@@ -8,7 +8,7 @@
          from Exchange under these exact coordinates (Java package stays com.priyan.maven). -->
     <groupId>3075da4c-6c1a-46d3-984a-191b16b7e34e</groupId>
     <artifactId>aws-tls-injector-maven-plugin</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>maven-plugin</packaging>
 
     <name>AWS S3 TLS Context Injector Maven Plugin</name>
