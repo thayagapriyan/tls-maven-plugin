@@ -11,6 +11,13 @@ stays alongside its history of code.
 ## [Unreleased]
 
 ### Changed
+- **groupId is now the Anypoint org GUID** (`3075da4c-6c1a-46d3-984a-191b16b7e34e`) instead of
+  `com.priyan.maven`, so the plugin builds, publishes to Exchange, and is consumed under one set
+  of coordinates. The Java package stays `com.priyan.maven` (independent of groupId). The `src/it`
+  poms now reference the plugin via `@project.groupId@` so they track the groupId automatically,
+  and the consuming Mule app resolves it under `${anypoint.orgId}` with no groupId override.
+  `publish-exchange.yml` dropped the `sed` rewrite step — it now does a single
+  `mvn -Pexchange-release clean deploy`.
 - **Source pivot: AWS Secrets Manager → AWS S3.** TLS files are now downloaded from an S3 bucket
   (`s3://bucket/key`) instead of Secrets Manager secrets. S3 objects are raw bytes, so the
   `isBinary`/Base64 handling was removed entirely — `.jks` and `.pem` stream straight to disk.
@@ -52,6 +59,12 @@ stays alongside its history of code.
   `docs/deploy.md`. `CLAUDE.md` now points agents at `AGENTS.md`.
 
 ### Fixed
+- **Exchange publish failed with `Goal: help already exists ... HelpMojo`.** The old
+  `publish-exchange.yml` built once under `com.priyan.maven`, then `sed`-rewrote the groupId and
+  ran `deploy` without `clean`, so the plugin-descriptor step generated a second `HelpMojo` under
+  the GUID package and conflicted with the stale one. Resolved by making the groupId permanently
+  the org GUID and deploying with a single `clean deploy` (no rewrite). Verified `mvn clean
+  install` is green under the GUID groupId (12 unit tests, ITs Passed: 2).
 - **Missing AWS credentials crashed the build instead of honoring `failOnMissingFile`.** On a CI
   runner with no creds, `AwsS3ObjectResolver.fetch` let an `SdkClientException` ("Unable to load
   credentials") escape — it is not an `S3Exception` — failing the `local-fake-s3` IT. Broadened the
@@ -89,6 +102,13 @@ stays alongside its history of code.
   deploy.md ... add these files reference into agents.md then refer agents.md into claude.md ...
   also update changelog.md for all session changes history"* → created the `docs/` set + `AGENTS.md`,
   linked it from `CLAUDE.md`, and recorded this session here.
+- *(CI log: `local-fake-s3` failed — "Unable to load credentials")* → broadened
+  `AwsS3ObjectResolver.fetch` to catch `SdkException` so missing-credential failures honor
+  `failOnMissingFile`.
+- *(CI log: publish failed — "Goal: help already exists ... HelpMojo")* and *"update maven plugin
+  pom to use my org id as group id 3075da4c-6c1a-46d3-984a-191b16b7e34e"* → set the groupId to the
+  org GUID permanently, switched ITs to `@project.groupId@`, and removed the `sed` step in favor of
+  a single `clean deploy`.
 
 ---
 

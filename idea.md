@@ -76,7 +76,8 @@ developers will use it:
 
 ```xml
 <plugin>
-    <groupId>com.priyan.maven</groupId>
+    <!-- groupId = Anypoint org GUID (Exchange coordinate). -->
+    <groupId>3075da4c-6c1a-46d3-984a-191b16b7e34e</groupId>
     <artifactId>aws-tls-injector-maven-plugin</artifactId>
     <version>1.0.0</version>
     <executions>

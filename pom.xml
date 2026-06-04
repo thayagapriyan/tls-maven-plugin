@@ -4,7 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.priyan.maven</groupId>
+    <!-- groupId = Anypoint org/business-group GUID, so the asset publishes to and resolves
+         from Exchange under these exact coordinates (Java package stays com.priyan.maven). -->
+    <groupId>3075da4c-6c1a-46d3-984a-191b16b7e34e</groupId>
     <artifactId>aws-tls-injector-maven-plugin</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
@@ -194,7 +196,7 @@
         <profile>
             <id>exchange-release</id>
             <properties>
-                <anypoint.orgId>YOUR_ANYPOINT_ORG_ID</anypoint.orgId>
+                <anypoint.orgId>3075da4c-6c1a-46d3-984a-191b16b7e34e</anypoint.orgId>
             </properties>
             <distributionManagement>
                 <repository>

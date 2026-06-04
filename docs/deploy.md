@@ -5,9 +5,11 @@ The plugin is distributed via **Anypoint Exchange** so Mule apps can resolve it 
 ## The groupId constraint
 
 Exchange stores every asset under `groupId = <your Anypoint org/business-group GUID>`. This
-project's source groupId is `com.priyan.maven`, so the publish step **rewrites the project
-groupId to the org GUID** before deploying. Consumers then reference it as
-`<orgId>:aws-tls-injector-maven-plugin:<version>`.
+project's `groupId` **is** that GUID (`3075da4c-6c1a-46d3-984a-191b16b7e34e`), so the build
+publishes under exactly the coordinates consumers reference —
+`3075da4c-6c1a-46d3-984a-191b16b7e34e:aws-tls-injector-maven-plugin:<version>`. No coordinate
+rewriting happens at publish time. (The Java package stays `com.priyan.maven`; groupId and
+package are independent.)
 
 ## Manual publish
 
@@ -15,8 +17,8 @@ groupId to the org GUID** before deploying. Consumers then reference it as
 # settings.xml needs <server id="anypoint-exchange-v3"> with a connected app:
 #   username: ~~~Client~~~     password: <clientId>~?~<clientSecret>
 
-# (groupId must be the org id for Exchange — change <groupId> or sed it)
-mvn -Pexchange-release deploy -DskipTests -Danypoint.orgId=<your-org-guid>
+# groupId is already the org GUID, so just deploy:
+mvn -Pexchange-release clean deploy -Danypoint.orgId=<your-org-guid>
 ```
 
 The `exchange-release` profile (in `pom.xml`) supplies `distributionManagement` pointing at:
@@ -25,9 +27,11 @@ The `exchange-release` profile (in `pom.xml`) supplies `distributionManagement` 
 ## CI publish
 
 `.github/workflows/publish-exchange.yml` runs on a `v*` tag (or manual dispatch):
-1. build & test the plugin
-2. `sed` the project groupId → `ANYPOINT_ORG_ID`
-3. `mvn -Pexchange-release deploy`
+1. write `settings.xml` (Exchange connected app)
+2. `mvn -Pexchange-release clean deploy` — groupId already equals the org GUID, no rewriting
+
+> `clean` matters: a build left over under a different groupId would cause a
+> "Goal: help already exists" plugin-descriptor (`HelpMojo`) conflict.
 
 **Required config:**
 - secrets: `EXCHANGE_CLIENT_ID`, `EXCHANGE_CLIENT_SECRET` (connected app, Exchange Contributor)

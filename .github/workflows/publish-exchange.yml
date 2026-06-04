@@ -7,8 +7,8 @@ name: Publish to Anypoint Exchange
 #   Secrets:  EXCHANGE_CLIENT_ID, EXCHANGE_CLIENT_SECRET  (Anypoint connected app, Exchange write)
 #   Variables: ANYPOINT_ORG_ID                            (org/business-group GUID = published groupId)
 #
-# NOTE: Exchange requires groupId = ANYPOINT_ORG_ID. This project's groupId is
-# 'com.priyan.maven', so the publish step rewrites coordinates to the org id before deploy.
+# The project groupId is already the Anypoint org GUID, so no coordinate rewriting is needed —
+# the build publishes under exactly the coordinates consumers reference.
 on:
   push:
     tags: [ 'v*' ]
@@ -50,15 +50,9 @@ jobs:
           EXCHANGE_CLIENT_ID: ${{ secrets.EXCHANGE_CLIENT_ID }}
           EXCHANGE_CLIENT_SECRET: ${{ secrets.EXCHANGE_CLIENT_SECRET }}
 
-      - name: Build & test the plugin
-        run: mvn -B clean verify
-
-      # Exchange stores every asset under groupId = orgId. Rewrite the project
-      # groupId (only occurrence: the project coordinate on line ~7) to the org GUID.
-      - name: Set Exchange groupId
-        run: sed -i "s#<groupId>com.priyan.maven</groupId>#<groupId>${ANYPOINT_ORG_ID}</groupId>#" pom.xml
-
-      - name: Deploy to Exchange
+      # Single clean build + test + deploy. groupId already equals the org GUID, so the asset
+      # publishes under the exact coordinates consumers reference — no rewriting needed.
+      - name: Build, test & deploy to Exchange
         run: >-
-          mvn -B -Pexchange-release deploy -DskipTests
+          mvn -B -Pexchange-release clean deploy
           -Danypoint.orgId=${ANYPOINT_ORG_ID}
