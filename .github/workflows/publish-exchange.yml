@@ -50,9 +50,26 @@ jobs:
           EXCHANGE_CLIENT_ID: ${{ secrets.EXCHANGE_CLIENT_ID }}
           EXCHANGE_CLIENT_SECRET: ${{ secrets.EXCHANGE_CLIENT_SECRET }}
 
-      # Single clean build + test + deploy. groupId already equals the org GUID, so the asset
-      # publishes under the exact coordinates consumers reference — no rewriting needed.
+      # Extract release version from tag (v1.0.0 -> 1.0.0).
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == "refs/tags/v"* ]]; then
+            VERSION="${{ github.ref }}"
+            VERSION=${VERSION#refs/tags/v}
+          else
+            VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+            VERSION=${VERSION%-SNAPSHOT}
+          fi
+          echo "release_version=${VERSION}" >> $GITHUB_OUTPUT
+
+      # Set the release version (remove -SNAPSHOT), build, test & deploy to Exchange.
+      # Exchange only accepts immutable release versions, not SNAPSHOTs.
       - name: Build, test & deploy to Exchange
         run: >-
-          mvn -B -Pexchange-release clean deploy
+          mvn -B -Pexchange-release clean
+          org.codehaus.mojo:versions-maven-plugin:2.16.1:set
+          -DnewVersion=${{ steps.version.outputs.release_version }}
+          -DgenerateBackupPoms=false
+          deploy
           -Danypoint.orgId=${ANYPOINT_ORG_ID}
