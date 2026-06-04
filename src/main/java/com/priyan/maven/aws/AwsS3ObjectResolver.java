@@ -5,6 +5,7 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
@@ -75,6 +76,11 @@ public class AwsS3ObjectResolver implements S3ObjectResolver {
                     ? e.awsErrorDetails().errorMessage()
                     : e.getMessage();
             throw new S3FetchException("Failed to download " + config.location() + ": " + detail, e);
+        } catch (SdkException e) {
+            // Client-side failures (missing credentials, connectivity, endpoint) are not
+            // S3Exceptions. Treat them as fetch failures so failOnMissingFile governs them.
+            throw new S3FetchException("Failed to download " + config.location() + ": "
+                    + e.getMessage(), e);
         }
     }
 

@@ -52,6 +52,10 @@ No AWS account or OIDC is used in this repo.
 - The plugin's S3 client has no `endpointOverride`; LocalStack works via `AWS_ENDPOINT_URL_S3`
   using the `s3.localhost.localstack.cloud` virtual-host domain.
 - `aws-download` failing on a plain `mvn install` means the default exclude was removed — restore it.
+- **No AWS credentials at all** is handled gracefully: a missing-credentials `SdkException` is
+  mapped to `S3FetchException`, so `local-fake-s3` (`failOnMissingFile=false`) warns and passes on
+  a clean CI runner. If you see a hard `MojoExecutionException: Unable to load credentials`, the
+  `SdkException` catch in `AwsS3ObjectResolver.fetch` was removed.
 
 ## Related docs
 

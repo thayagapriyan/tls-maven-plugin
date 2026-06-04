@@ -52,8 +52,10 @@ if (!target.startsWith(base)) throw new IllegalArgumentException(...);  // path 
   `DefaultCredentialsProvider`; sets `region` when provided. **No `endpointOverride`** — LocalStack
   is reached via the `AWS_ENDPOINT_URL_S3` env var (SDK v2 native).
 - `fetch()`: `getObjectAsBytes` with optional `versionId`. Maps `NoSuchKeyException`,
-  `NoSuchBucketException`, generic `S3Exception` → `S3FetchException` using
-  `awsErrorDetails().errorMessage()` (never object bytes).
+  `NoSuchBucketException`, generic `S3Exception` (via `awsErrorDetails().errorMessage()`), and
+  client-side `SdkException` (missing credentials, connectivity, endpoint) → `S3FetchException`
+  (never object bytes). Catching `SdkException` ensures credential failures honor
+  `failOnMissingFile` instead of crashing the build.
 
 ## S3FileConfig
 

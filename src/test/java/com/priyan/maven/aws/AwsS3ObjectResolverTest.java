@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
@@ -55,6 +56,15 @@ class AwsS3ObjectResolverTest {
     void wrapsNoSuchBucketAsS3FetchException() {
         when(client.getObjectAsBytes((GetObjectRequest) any()))
                 .thenThrow(NoSuchBucketException.builder().message("nope").build());
+
+        assertThrows(S3FetchException.class, () -> new AwsS3ObjectResolver(client).fetch(cfg()));
+    }
+
+    @Test
+    void wrapsClientErrorAsS3FetchException() {
+        // e.g. missing credentials / connectivity — an SdkClientException, not an S3Exception.
+        when(client.getObjectAsBytes((GetObjectRequest) any()))
+                .thenThrow(SdkClientException.create("Unable to load credentials"));
 
         assertThrows(S3FetchException.class, () -> new AwsS3ObjectResolver(client).fetch(cfg()));
     }

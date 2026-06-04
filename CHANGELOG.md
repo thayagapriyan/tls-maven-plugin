@@ -52,6 +52,13 @@ stays alongside its history of code.
   `docs/deploy.md`. `CLAUDE.md` now points agents at `AGENTS.md`.
 
 ### Fixed
+- **Missing AWS credentials crashed the build instead of honoring `failOnMissingFile`.** On a CI
+  runner with no creds, `AwsS3ObjectResolver.fetch` let an `SdkClientException` ("Unable to load
+  credentials") escape — it is not an `S3Exception` — failing the `local-fake-s3` IT. Broadened the
+  catch to `SdkException` so client-side failures (credentials, connectivity, endpoint) map to
+  `S3FetchException` and respect `failOnMissingFile`. Added a unit test
+  (`wrapsClientErrorAsS3FetchException`); `mvn verify` passes with creds cleared (12 unit tests,
+  ITs Passed: 2, Failed: 0).
 - **Stale root `TESTING.md`** reduced to a pointer to `docs/testing.md`. It described a
   `terraform/` dir and real-AWS/OIDC CI that were moved out of this repo (plugin CI is now
   LocalStack-only; OIDC/Terraform live in the Mule app repo).
