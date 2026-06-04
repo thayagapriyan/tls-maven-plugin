@@ -119,20 +119,27 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
             </plugin>
-            <plugin>
-                <groupId>org.mule.tools.maven</groupId>
-                <artifactId>exchange-mule-maven-plugin</artifactId>
-                <version>0.0.23</version>
-                <executions>
-                    <execution>
-                        <id>validate</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>validate-manifest</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+        <plugin>
+            <groupId>org.mule.tools.maven</groupId>
+            <artifactId>exchange-mule-maven-plugin</artifactId>
+            <version>0.1.7</version>
+            <executions>
+                <execution>
+                    <id>validate</id>
+                    <phase>validate</phase>
+                    <goals>
+                        <goal>exchange-pre-deploy</goal>
+                    </goals>
+                </execution>
+                <execution>
+                    <id>deploy</id>
+                    <phase>deploy</phase>
+                    <goals>
+                        <goal>exchange-deploy</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-invoker-plugin</artifactId>
