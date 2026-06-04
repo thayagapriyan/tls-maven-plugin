@@ -24,18 +24,30 @@ mvn -Pexchange-release clean deploy -Danypoint.orgId=<your-org-guid>
 The `exchange-release` profile (in `pom.xml`) supplies `distributionManagement` pointing at:
 `https://maven.anypoint.mulesoft.com/api/v3/organizations/<orgId>/maven`.
 
-This `maven-plugin` is published as a **plain Maven artifact** straight to the Exchange v3 Maven
-endpoint using the **stock `maven-deploy-plugin`** — no `exchange-mule-maven-plugin` and no
-`exchange-pre-deploy`. That Exchange-plugin flow is for `<packaging>pom</packaging>` *custom*
-assets (`<type>custom</type>`); forcing it onto `maven-plugin` packaging makes `exchange-pre-deploy`
-fail to resolve its generated `preConditions-*.json` (`Artifact could not be resolved`). Publishing
-as a normal Maven artifact keeps it a real, consumable `<plugin>` and lets the consuming Mule app
-resolve it from the Exchange Maven repo by coordinates.
+Exchange's v3 Maven facade publishes this as a **custom asset** (per MuleSoft's custom-asset
+sample), driven by `exchange-mule-maven-plugin` in the `exchange-release` profile:
 
-> **412 Precondition Failed on deploy** = the target version already exists. Exchange versions are
-> **immutable**, so you can never re-publish the same `<version>`. Bump `pom.xml` `<version>`
-> (and the consumer's `tls.injector.plugin.version`) for every publish. Pushing a `v*` tag whose
-> version was already (even partially) published will 412.
+- `<type>custom</type>` property + `<inherited>false</inherited>` on the plugin — mandatory for
+  the handshake.
+- `exchange-pre-deploy` (phase `validate`) registers the asset/version with Exchange; then
+  `exchange-deploy` (phase `deploy`) uploads.
+- `maven-jar-plugin` attaches the built plugin JAR under `classifier=custom` so it ships as the
+  asset's file (the JAR remains a fully usable `maven-plugin`).
+- The stock `maven-deploy-plugin` is **skipped** — it is incompatible with the facade (a plain
+  PUT returns **412**); `exchange-deploy` is the sole uploader.
+
+The profile is self-contained, so ordinary CI (`test`/`verify`) never invokes the Exchange plugin
+and needs no credentials.
+
+> **412 Precondition Failed on deploy** has two causes here: (a) the stock `maven-deploy-plugin`
+> ran instead of `exchange-deploy` (the facade rejects a plain PUT — `exchange-pre-deploy` must
+> register the version first), or (b) the target `<version>` already exists (Exchange versions are
+> **immutable**). For (b), bump `pom.xml` `<version>` and the consumer's
+> `tls.injector.plugin.version`.
+>
+> `exchange-pre-deploy` cannot run locally without Exchange credentials in `settings.xml` — it
+> round-trips a `preConditions-*.json` through the authenticated `anypoint-exchange-v3` endpoint.
+> Run the publish from CI.
 
 ## CI publish
 

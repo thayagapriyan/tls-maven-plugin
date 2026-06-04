@@ -26,6 +26,11 @@
         <aws.sdk.version>2.28.16</aws.sdk.version>
         <junit.version>5.10.2</junit.version>
         <mockito.version>5.11.0</mockito.version>
+
+        <!-- Anypoint Exchange publishes this as a custom asset (see the exchange-release
+             profile). exchange-mule-maven-plugin reads <type> to set the asset classifier. -->
+        <type>custom</type>
+        <exchange.mule.maven.plugin.version>0.1.7</exchange.mule.maven.plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -205,17 +210,72 @@
                     <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${anypoint.orgId}/maven</url>
                 </repository>
             </distributionManagement>
-            <!--
-              A maven-plugin is published as a plain Maven artifact via the stock
-              maven-deploy-plugin straight to the Exchange v3 Maven endpoint above. We do NOT
-              use exchange-mule-maven-plugin / exchange-pre-deploy here: that flow is for
-              <packaging>pom</packaging> "custom" assets, and forcing it onto maven-plugin
-              packaging makes exchange-pre-deploy fail to resolve its generated
-              preConditions-*.json ("Artifact could not be resolved").
+            <build>
+                <plugins>
+                    <!--
+                      Exchange v3 custom-asset publish (per MuleSoft's custom-asset sample).
+                      The facade rejects a plain maven-deploy PUT (HTTP 412); it requires
+                      exchange-pre-deploy to register the asset/version first, then
+                      exchange-deploy uploads. <type>custom</type> + <inherited>false</inherited>
+                      are mandatory for the handshake.
 
-              Exchange versions are immutable: deploying a version that already exists returns
-              HTTP 412 Precondition Failed. Always bump <version> for a re-publish.
-            -->
+                      Scoped to this profile so ordinary CI (test/verify) never invokes it and
+                      never needs Exchange credentials.
+                    -->
+                    <plugin>
+                        <groupId>org.mule.tools.maven</groupId>
+                        <artifactId>exchange-mule-maven-plugin</artifactId>
+                        <version>${exchange.mule.maven.plugin.version}</version>
+                        <inherited>false</inherited>
+                        <executions>
+                            <execution>
+                                <id>validate</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>exchange-pre-deploy</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>deploy</id>
+                                <phase>deploy</phase>
+                                <goals>
+                                    <goal>exchange-deploy</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- exchange-deploy uploads the asset file; attach the built plugin JAR
+                         under classifier=custom so it rides along as the custom asset's
+                         artifact (the JAR is still a fully usable maven-plugin). -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-custom-classifier</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration>
+                                    <classifier>${type}</classifier>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- The Exchange facade is incompatible with the stock maven-deploy-plugin
+                         (it 412s a plain PUT). exchange-deploy is the sole uploader. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 

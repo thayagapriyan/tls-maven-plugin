@@ -11,21 +11,23 @@ stays alongside its history of code.
 ## [Unreleased]
 
 ### Fixed
-- **Exchange publish: publish the plugin as a plain Maven artifact** instead of via
-  `exchange-mule-maven-plugin`. That plugin's `exchange-pre-deploy`/`exchange-deploy` flow is for
-  `<packaging>pom</packaging>` *custom* assets (`<type>custom</type>`); driving it from a
-  `maven-plugin` package made `exchange-pre-deploy` fail resolving its own generated
-  `preConditions-*.json` (`Artifact could not be resolved`) — in CI as well as locally. The
-  `exchange-release` profile now carries only `distributionManagement`, so the stock
-  `maven-deploy-plugin` uploads the `maven-plugin` JAR + POM straight to the Exchange v3 Maven
-  endpoint, and the consuming Mule app resolves it by coordinates. Dropped the unused
-  `<type>custom</type>` property.
-- **Bumped plugin version `1.0.0` → `1.0.5`.** Exchange asset versions are immutable; earlier
-  publish attempts under tags `v1.0.0`–`v1.0.4` could have registered `1.0.0`, so re-deploying it
-  returned **HTTP 412 Precondition Failed**. `1.0.5` is a clean, never-attempted coordinate. The
-  consuming app's `tls.injector.plugin.version` is bumped to match.
-  - _Prompt:_ fix the failing Exchange publish — first `exchange-pre-deploy ... Artifact could not
-    be resolved`, then `deploy ... 412 Precondition Failed`.
+- **Exchange publish: use the official custom-asset flow.** The v3 Maven facade rejects a plain
+  `maven-deploy-plugin` PUT with **HTTP 412 Precondition Failed** (confirmed even on a fresh, never-
+  published version `1.0.5`) — it requires the `exchange-mule-maven-plugin` handshake. The
+  `exchange-release` profile now mirrors MuleSoft's custom-asset sample:
+  - `<type>custom</type>` property + `<inherited>false</inherited>` on `exchange-mule-maven-plugin`
+    (mandatory for the handshake; `<type>custom</type>` had been wrongly dropped earlier).
+  - `exchange-pre-deploy` @ `validate` registers the asset/version; `exchange-deploy` @ `deploy`
+    uploads.
+  - `maven-jar-plugin` attaches the plugin JAR under `classifier=custom` as the asset file.
+  - stock `maven-deploy-plugin` skipped (incompatible with the facade).
+  - Binding `exchange-pre-deploy` to `package` (an earlier attempt) failed with
+    `Artifact could not be resolved`; `validate` is correct.
+- **Bumped plugin version `1.0.0` → `1.0.5`** (Exchange versions are immutable; tags
+  `v1.0.0`–`v1.0.4` had already touched `1.0.0`). Consumer `tls.injector.plugin.version` bumped to
+  match. Each future publish must bump to an unused version.
+  - _Prompt:_ fix the failing Exchange publish — `exchange-pre-deploy ... Artifact could not be
+    resolved` and `deploy ... 412 Precondition Failed`.
 
 ### Changed
 - **groupId is now the Anypoint org GUID** (`3075da4c-6c1a-46d3-984a-191b16b7e34e`) instead of
