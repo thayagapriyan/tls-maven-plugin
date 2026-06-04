@@ -109,6 +109,9 @@ stays alongside its history of code.
   pom to use my org id as group id 3075da4c-6c1a-46d3-984a-191b16b7e34e"* → set the groupId to the
   org GUID permanently, switched ITs to `@project.groupId@`, and removed the `sed` step in favor of
   a single `clean deploy`.
+- *(CI log: exchange pre-deploy failed because the artifact did not exist yet)* → moved
+  `exchange-pre-deploy` from the Maven `validate` phase to `package`, so artifact validation runs
+  after packaging and before `deploy`.
 
 ---
 

@@ -24,6 +24,8 @@ mvn -Pexchange-release clean deploy -Danypoint.orgId=<your-org-guid>
 The `exchange-release` profile (in `pom.xml`) supplies `distributionManagement` pointing at:
 `https://maven.anypoint.mulesoft.com/api/v3/organizations/<orgId>/maven`.
 
+The plugin also configures `exchange-pre-deploy` to run after packaging so the artifact exists before Exchange validation.
+
 ## CI publish
 
 `.github/workflows/publish-exchange.yml` runs on a `v*` tag (or manual dispatch):
