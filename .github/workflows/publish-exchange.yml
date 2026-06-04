@@ -52,6 +52,7 @@ jobs:
 
       # Extract release version from tag (v1.0.0 -> 1.0.0).
       - name: Extract version from tag
+        if: false
         id: version
         run: |
           if [[ "${{ github.ref }}" == "refs/tags/v"* ]]; then
@@ -68,8 +69,6 @@ jobs:
       - name: Build, test & deploy to Exchange
         run: >-
           mvn -B -Pexchange-release clean
-          org.codehaus.mojo:versions-maven-plugin:2.16.1:set
-          -DnewVersion=${{ steps.version.outputs.release_version }}
           -DgenerateBackupPoms=false
           deploy
           -Danypoint.orgId=${ANYPOINT_ORG_ID}
