@@ -10,31 +10,26 @@ stays alongside its history of code.
 
 ## [Unreleased]
 
-### Fixed
-- **Exchange publish: use the official custom-asset flow.** The v3 Maven facade rejects a plain
-  `maven-deploy-plugin` PUT with **HTTP 412 Precondition Failed** (confirmed even on a fresh, never-
-  published version `1.0.5`) — it requires the `exchange-mule-maven-plugin` handshake. The
-  `exchange-release` profile now mirrors MuleSoft's custom-asset sample:
-  - `<type>custom</type>` property + `<inherited>false</inherited>` on `exchange-mule-maven-plugin`
-    (mandatory for the handshake; `<type>custom</type>` had been wrongly dropped earlier).
-  - `exchange-pre-deploy` @ `validate` registers the asset/version; `exchange-deploy` @ `deploy`
-    uploads.
-  - `maven-jar-plugin` attaches the plugin JAR under `classifier=custom` as the asset file.
-  - stock `maven-deploy-plugin` skipped (incompatible with the facade).
-  - Binding `exchange-pre-deploy` to `package` (an earlier attempt) failed with
-    `Artifact could not be resolved`; `validate` is correct.
-  - **Aligned the repository id with the server/distributionManagement id.** The `<repository>`
-    was `anypoint-exchange` while the `settings.xml` `<server>` and `<distributionManagement>` were
-    `anypoint-exchange-v3`. `exchange-pre-deploy` reads its `preConditions-*.json` back through the
-    matching repository's credentials, so the mismatch made that read unauthenticated →
-    `Artifact could not be resolved` in CI. Renamed the repo to `anypoint-exchange-v3` and pointed
-    it at the org-scoped v3 URL; promoted `anypoint.orgId` to a top-level property so the
-    always-active repository URL resolves.
-- **Bumped plugin version `1.0.0` → `1.0.5`** (Exchange versions are immutable; tags
-  `v1.0.0`–`v1.0.4` had already touched `1.0.0`). Consumer `tls.injector.plugin.version` bumped to
-  match. Each future publish must bump to an unused version.
-  - _Prompt:_ fix the failing Exchange publish — `exchange-pre-deploy ... Artifact could not be
-    resolved` and `deploy ... 412 Precondition Failed`.
+### Changed
+- **Publish the plugin to GitHub Packages instead of Anypoint Exchange.** A Maven *build plugin*
+  must be a resolvable `maven-plugin` artifact in a real Maven repo so the consuming Mule app can
+  download and execute its goal. Anypoint Exchange's Maven facade cannot host that — it publishes
+  file "assets" and rejected this `maven-plugin` outright with **"Could not determine asset type"**
+  (after earlier rejecting plain `maven-deploy` with **HTTP 412**). Exchange was the wrong home.
+  - Replaced the `exchange-release` profile with a `github-release` profile whose
+    `distributionManagement` is `https://maven.pkg.github.com/thayagapriyan/tls-maven-plugin`;
+    the stock `maven-deploy-plugin` uploads there.
+  - Removed `exchange-mule-maven-plugin`, the `maven-jar-plugin` `classifier=custom` attach, the
+    `<type>custom</type>` / `exchange.mule.maven.plugin.version` / `anypoint.orgId` properties, and
+    the `anypoint-exchange*` repositories.
+  - Rewrote the publish workflow (`publish-exchange.yml` → `publish-plugin.yml`) to deploy with the
+    built-in `GITHUB_TOKEN` — no Exchange secrets needed.
+  - `<packaging>maven-plugin</packaging>` and the org-GUID `groupId` are unchanged, so consumer
+    coordinates didn't churn; only the *host* moved.
+  - Version stays `1.0.5` (already bumped); future releases bump `<version>` + the consumer's
+    `tls.injector.plugin.version`.
+  - _Prompt:_ fix the failing Exchange publish (`exchange-pre-deploy ... Artifact could not be
+    resolved`, `deploy ... 412`, then `Could not determine asset type`).
 
 ### Changed
 - **groupId is now the Anypoint org GUID** (`3075da4c-6c1a-46d3-984a-191b16b7e34e`) instead of

@@ -1,0 +1,43 @@
+name: Publish plugin to GitHub Packages
+
+# Publishes the custom Maven plugin to GitHub Packages (a real Maven registry) so the
+# consuming Mule app can resolve and execute it as a build <plugin>.
+#
+# Anypoint Exchange is intentionally NOT used: its custom-asset facade hosts file assets, not
+# consumable maven-plugin artifacts (it rejects maven-plugin packaging with "Could not determine
+# asset type"). A build plugin must live in a Maven repo, which is what GitHub Packages provides.
+#
+# Auth: the built-in GITHUB_TOKEN (packages: write) authenticates the deploy. No extra secrets.
+#
+# Runs on a version tag (e.g. v1.0.6) or manually. Bump pom.xml <version> for every publish.
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          # Configures ~/.m2/settings.xml with a <server id="github"> that uses these env vars.
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Build, test & deploy to GitHub Packages
+        run: mvn -B -Pgithub-release clean deploy
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

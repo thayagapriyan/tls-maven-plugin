@@ -4,8 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- groupId = Anypoint org/business-group GUID, so the asset publishes to and resolves
-         from Exchange under these exact coordinates (Java package stays com.priyan.maven). -->
+    <!-- groupId = the historical Anypoint org GUID, kept so consumer coordinates didn't churn
+         when publishing moved to GitHub Packages (Java package stays com.priyan.maven). GitHub
+         Packages accepts any groupId; this could be simplified to com.priyan.maven later. -->
     <groupId>3075da4c-6c1a-46d3-984a-191b16b7e34e</groupId>
     <artifactId>aws-tls-injector-maven-plugin</artifactId>
     <version>1.0.5</version>
@@ -26,16 +27,6 @@
         <aws.sdk.version>2.28.16</aws.sdk.version>
         <junit.version>5.10.2</junit.version>
         <mockito.version>5.11.0</mockito.version>
-
-        <!-- Anypoint Exchange publishes this as a custom asset (see the exchange-release
-             profile). exchange-mule-maven-plugin reads <type> to set the asset classifier. -->
-        <type>custom</type>
-        <exchange.mule.maven.plugin.version>0.1.7</exchange.mule.maven.plugin.version>
-
-        <!-- Org/business-group GUID = Exchange repo path. Defined at top level so the
-             always-active <repositories> URL resolves in every build; the exchange-release
-             profile can still override it via -Danypoint.orgId. -->
-        <anypoint.orgId>3075da4c-6c1a-46d3-984a-191b16b7e34e</anypoint.orgId>
     </properties>
 
     <dependencyManagement>
@@ -192,110 +183,31 @@
         </profile>
 
         <!--
-          Publishing to Anypoint Exchange.
+          Publishing the plugin to GitHub Packages (a real Maven registry).
 
-          IMPORTANT: Exchange stores every asset under groupId = your organization
-          (business group) ID. This plugin's groupId is 'com.priyan.maven', so before
-          a real Exchange publish you must republish it under the org GUID — set
-          -Dexchange.groupId / change <groupId> to the org id, or deploy with
-          deploy-file using the org-id coordinates. The org id also forms the repo URL.
+          A Maven *build plugin* must be a resolvable maven-plugin artifact in a real Maven repo
+          so the consuming Mule app can download it and execute its goal. Anypoint Exchange's
+          custom-asset facade cannot host that (it publishes file "assets", not consumable
+          plugins, and rejects maven-plugin packaging with "Could not determine asset type").
+          So we publish to GitHub Packages instead.
 
-          Activate with: mvn -Pexchange-release deploy
-          Requires a <server id="anypoint-exchange-v3"> (connected app) in settings.xml.
+          Activate with: mvn -Pgithub-release deploy
+          Requires a <server id="github"> in settings.xml whose username is the GitHub user/owner
+          and password is a token with write:packages (in CI, the workflow's GITHUB_TOKEN).
         -->
         <profile>
-            <id>exchange-release</id>
-            <properties>
-                <anypoint.orgId>3075da4c-6c1a-46d3-984a-191b16b7e34e</anypoint.orgId>
-            </properties>
+            <id>github-release</id>
             <distributionManagement>
                 <repository>
-                    <id>anypoint-exchange-v3</id>
-                    <name>Anypoint Exchange</name>
-                    <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${anypoint.orgId}/maven</url>
+                    <id>github</id>
+                    <name>GitHub Packages</name>
+                    <url>https://maven.pkg.github.com/thayagapriyan/tls-maven-plugin</url>
                 </repository>
             </distributionManagement>
-            <build>
-                <plugins>
-                    <!--
-                      Exchange v3 custom-asset publish (per MuleSoft's custom-asset sample).
-                      The facade rejects a plain maven-deploy PUT (HTTP 412); it requires
-                      exchange-pre-deploy to register the asset/version first, then
-                      exchange-deploy uploads. <type>custom</type> + <inherited>false</inherited>
-                      are mandatory for the handshake.
-
-                      Scoped to this profile so ordinary CI (test/verify) never invokes it and
-                      never needs Exchange credentials.
-                    -->
-                    <plugin>
-                        <groupId>org.mule.tools.maven</groupId>
-                        <artifactId>exchange-mule-maven-plugin</artifactId>
-                        <version>${exchange.mule.maven.plugin.version}</version>
-                        <inherited>false</inherited>
-                        <executions>
-                            <execution>
-                                <id>validate</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>exchange-pre-deploy</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>deploy</id>
-                                <phase>deploy</phase>
-                                <goals>
-                                    <goal>exchange-deploy</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!-- exchange-deploy uploads the asset file; attach the built plugin JAR
-                         under classifier=custom so it rides along as the custom asset's
-                         artifact (the JAR is still a fully usable maven-plugin). -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>attach-custom-classifier</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                                <configuration>
-                                    <classifier>${type}</classifier>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <!-- The Exchange facade is incompatible with the stock maven-deploy-plugin
-                         (it 412s a plain PUT). exchange-deploy is the sole uploader. -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-deploy-plugin</artifactId>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
     </profiles>
 
     <repositories>
-    <!-- id MUST equal the <server> id in settings.xml and the distributionManagement id
-         (anypoint-exchange-v3). exchange-pre-deploy reads its generated preConditions-*.json
-         back through THIS repository's credentials; an id mismatch makes that read
-         unauthenticated -> "Artifact could not be resolved". URL is the org-scoped v3 endpoint
-         so it also matches the runId/... base the plugin resolves against. -->
-    <repository>
-        <id>anypoint-exchange-v3</id>
-        <name>Anypoint Exchange</name>
-        <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${anypoint.orgId}/maven</url>
-        <layout>default</layout>
-    </repository>
     <repository>
         <id>mulesoft-releases</id>
         <name>MuleSoft Releases Repository</name>
