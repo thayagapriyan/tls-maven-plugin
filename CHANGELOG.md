@@ -23,6 +23,13 @@ stays alongside its history of code.
   - stock `maven-deploy-plugin` skipped (incompatible with the facade).
   - Binding `exchange-pre-deploy` to `package` (an earlier attempt) failed with
     `Artifact could not be resolved`; `validate` is correct.
+  - **Aligned the repository id with the server/distributionManagement id.** The `<repository>`
+    was `anypoint-exchange` while the `settings.xml` `<server>` and `<distributionManagement>` were
+    `anypoint-exchange-v3`. `exchange-pre-deploy` reads its `preConditions-*.json` back through the
+    matching repository's credentials, so the mismatch made that read unauthenticated →
+    `Artifact could not be resolved` in CI. Renamed the repo to `anypoint-exchange-v3` and pointed
+    it at the org-scoped v3 URL; promoted `anypoint.orgId` to a top-level property so the
+    always-active repository URL resolves.
 - **Bumped plugin version `1.0.0` → `1.0.5`** (Exchange versions are immutable; tags
   `v1.0.0`–`v1.0.4` had already touched `1.0.0`). Consumer `tls.injector.plugin.version` bumped to
   match. Each future publish must bump to an unused version.

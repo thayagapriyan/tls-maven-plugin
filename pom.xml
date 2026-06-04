@@ -31,6 +31,11 @@
              profile). exchange-mule-maven-plugin reads <type> to set the asset classifier. -->
         <type>custom</type>
         <exchange.mule.maven.plugin.version>0.1.7</exchange.mule.maven.plugin.version>
+
+        <!-- Org/business-group GUID = Exchange repo path. Defined at top level so the
+             always-active <repositories> URL resolves in every build; the exchange-release
+             profile can still override it via -Danypoint.orgId. -->
+        <anypoint.orgId>3075da4c-6c1a-46d3-984a-191b16b7e34e</anypoint.orgId>
     </properties>
 
     <dependencyManagement>
@@ -280,10 +285,15 @@
     </profiles>
 
     <repositories>
+    <!-- id MUST equal the <server> id in settings.xml and the distributionManagement id
+         (anypoint-exchange-v3). exchange-pre-deploy reads its generated preConditions-*.json
+         back through THIS repository's credentials; an id mismatch makes that read
+         unauthenticated -> "Artifact could not be resolved". URL is the org-scoped v3 endpoint
+         so it also matches the runId/... base the plugin resolves against. -->
     <repository>
-        <id>anypoint-exchange</id>
+        <id>anypoint-exchange-v3</id>
         <name>Anypoint Exchange</name>
-        <url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+        <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${anypoint.orgId}/maven</url>
         <layout>default</layout>
     </repository>
     <repository>

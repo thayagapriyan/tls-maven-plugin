@@ -49,6 +49,17 @@ and needs no credentials.
 > round-trips a `preConditions-*.json` through the authenticated `anypoint-exchange-v3` endpoint.
 > Run the publish from CI.
 
+### The id-alignment rule (critical)
+
+The **`<server>` id (settings.xml), the `<repository>` id, and the `<distributionManagement>`
+repository id must all be identical** — here, `anypoint-exchange-v3`. `exchange-pre-deploy`
+uploads its `preConditions-*.json` and then **reads it back through the matching `<repository>`**;
+that read needs the `<server>` credentials. If the repository id differs from the server id (this
+project originally had the repo as `anypoint-exchange` while the server/distmgmt were
+`anypoint-exchange-v3`), the read is unauthenticated and fails with `Artifact could not be
+resolved` — even in CI. The repository URL is the **org-scoped** v3 endpoint
+(`.../organizations/<orgId>/maven`) so it matches the `runId/...` base the plugin resolves against.
+
 ## CI publish
 
 `.github/workflows/publish-exchange.yml` runs on a `v*` tag (or manual dispatch):
