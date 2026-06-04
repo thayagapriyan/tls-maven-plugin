@@ -11,15 +11,19 @@ stays alongside its history of code.
 ## [Unreleased]
 
 ### Fixed
-- **Exchange publish: corrected the `exchange-mule-maven-plugin` wiring** (custom-asset publish).
-  Exchange's v3 Maven facade treats this `maven-plugin` JAR as a custom asset and **requires**
-  `exchange-pre-deploy` to run before upload — without it the deploy upload returns
-  **HTTP 412 Precondition Failed**. The plugin is now declared inside the `exchange-release`
-  profile with `exchange-pre-deploy` bound to **`validate`** (the original binding to `package`
-  failed with `Artifact could not be resolved`) and `exchange-deploy` bound to `deploy`; the stock
-  `maven-deploy-plugin` is skipped in that profile so `exchange-deploy` is the sole uploader.
-  Scoping it to the profile keeps normal CI (`test`/`verify`) free of the plugin and of Exchange
-  credentials. Also dropped the unused `<type>custom</type>` property.
+- **Exchange publish: publish the plugin as a plain Maven artifact** instead of via
+  `exchange-mule-maven-plugin`. That plugin's `exchange-pre-deploy`/`exchange-deploy` flow is for
+  `<packaging>pom</packaging>` *custom* assets (`<type>custom</type>`); driving it from a
+  `maven-plugin` package made `exchange-pre-deploy` fail resolving its own generated
+  `preConditions-*.json` (`Artifact could not be resolved`) — in CI as well as locally. The
+  `exchange-release` profile now carries only `distributionManagement`, so the stock
+  `maven-deploy-plugin` uploads the `maven-plugin` JAR + POM straight to the Exchange v3 Maven
+  endpoint, and the consuming Mule app resolves it by coordinates. Dropped the unused
+  `<type>custom</type>` property.
+- **Bumped plugin version `1.0.0` → `1.0.5`.** Exchange asset versions are immutable; earlier
+  publish attempts under tags `v1.0.0`–`v1.0.4` could have registered `1.0.0`, so re-deploying it
+  returned **HTTP 412 Precondition Failed**. `1.0.5` is a clean, never-attempted coordinate. The
+  consuming app's `tls.injector.plugin.version` is bumped to match.
   - _Prompt:_ fix the failing Exchange publish — first `exchange-pre-deploy ... Artifact could not
     be resolved`, then `deploy ... 412 Precondition Failed`.
 
