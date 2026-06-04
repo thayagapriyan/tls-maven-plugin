@@ -1,0 +1,4 @@
+aws_region  = "us-east-1"
+github_org  = "YOUR_GITHUB_USERNAME"
+github_repo = "tls-maven-plugin"
+# bucket_name = ""  # Leave empty to auto-generate, or set a unique name

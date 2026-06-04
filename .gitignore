@@ -1,0 +1,42 @@
+# Maven build output
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# TLS / certificate material — MUST NOT be committed
+*.jks
+*.p12
+*.pfx
+*.pem
+*.crt
+*.cer
+*.key
+*.keystore
+*.truststore
+
+# AWS credentials / secrets
+.aws/
+*.secret
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/.terraform.lock.hcl
+terraform/terraform.tfvars

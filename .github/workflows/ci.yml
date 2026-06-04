@@ -1,0 +1,100 @@
+name: CI - Build, Test & E2E
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # Required for OIDC auth with AWS
+  contents: read
+
+env:
+  JAVA_VERSION: '11'
+  # These are set from Terraform outputs — configure as repo secrets/variables
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  TLS_TEST_BUCKET: ${{ vars.TLS_TEST_BUCKET }}
+  TLS_TEST_KEY: ${{ vars.TLS_TEST_KEY || 'test/dummy-keystore.jks' }}
+
+jobs:
+  # ─── Job 1: Unit tests (no AWS needed) ────────────────────────────────────────
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run unit tests
+        run: mvn clean test --batch-mode --no-transfer-progress
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: target/surefire-reports/
+
+  # ─── Job 2: Integration tests (no AWS - plugin wiring) ────────────────────────
+  integration-tests-local:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run local integration tests (no AWS)
+        run: mvn clean verify --batch-mode --no-transfer-progress
+        env:
+          # Provide dummy AWS creds so the SDK doesn't fail at client creation
+          AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
+          AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+          AWS_DEFAULT_REGION: us-east-1
+
+  # ─── Job 3: E2E against real AWS (requires OIDC role) ─────────────────────────
+  e2e-aws:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: vars.TLS_TEST_BUCKET != ''
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run E2E integration tests against real AWS
+        run: |
+          mvn clean verify --batch-mode --no-transfer-progress \
+            -Daws.it.bucket=${{ env.TLS_TEST_BUCKET }} \
+            -Daws.it.key=${{ env.TLS_TEST_KEY }} \
+            -Daws.it.region=${{ env.AWS_REGION }}
+
+      - name: Upload E2E reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-reports
+          path: target/invoker-reports/

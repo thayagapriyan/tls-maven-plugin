@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.yourcompany.maven</groupId>
+    <artifactId>aws-tls-injector-maven-plugin</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>maven-plugin</packaging>
+
+    <name>AWS Secrets Manager TLS Context Injector Maven Plugin</name>
+    <description>
+        Fetches TLS keystore/truststore files from AWS Secrets Manager at build time and writes
+        them into the Maven build output directory, so certificates never get committed to VCS.
+    </description>
+
+    <properties>
+        <maven.compiler.release>11</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <maven.version>3.9.6</maven.version>
+        <maven.plugin.tools.version>3.13.1</maven.plugin.tools.version>
+        <aws.sdk.version>2.28.16</aws.sdk.version>
+        <junit.version>5.10.2</junit.version>
+        <mockito.version>5.11.0</mockito.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws.sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- Maven plugin API -->
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>${maven.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.plugin-tools</groupId>
+            <artifactId>maven-plugin-annotations</artifactId>
+            <version>${maven.plugin.tools.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+            <version>${maven.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- AWS SDK v2 -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+        </dependency>
+
+        <!-- Test -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <version>${maven.plugin.tools.version}</version>
+                <configuration>
+                    <goalPrefix>tls</goalPrefix>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-descriptor</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>descriptor</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>help-goal</id>
+                        <goals>
+                            <goal>helpmojo</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-invoker-plugin</artifactId>
+                <version>3.6.1</version>
+                <configuration>
+                    <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+                    <settingsFile>src/it/settings.xml</settingsFile>
+                    <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
+                    <postBuildHookScript>verify</postBuildHookScript>
+                    <goals>
+                        <goal>clean</goal>
+                        <goal>generate-resources</goal>
+                    </goals>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>install</goal>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- Profile for running integration tests against real AWS -->
+        <profile>
+            <id>aws-it</id>
+            <activation>
+                <property>
+                    <name>aws.it.bucket</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-invoker-plugin</artifactId>
+                        <configuration>
+                            <pomIncludes>
+                                <pomInclude>aws-download/pom.xml</pomInclude>
+                            </pomIncludes>
+                            <properties>
+                                <aws.it.bucket>${aws.it.bucket}</aws.it.bucket>
+                                <aws.it.key>${aws.it.key}</aws.it.key>
+                                <aws.it.region>${aws.it.region}</aws.it.region>
+                            </properties>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Integration test: exercises the plugin wiring using environment variables
+  that point to a fake/non-existent bucket. The test uses failOnMissingFile=false
+  so the build succeeds but proves the plugin binds correctly to the lifecycle.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.yourcompany.maven.it</groupId>
+    <artifactId>local-fake-s3</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <description>
+        Verifies the plugin binds to the lifecycle and produces the expected log output.
+        Uses failOnMissingFile=false so no real AWS connection is needed.
+    </description>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.yourcompany.maven</groupId>
+                <artifactId>aws-tls-injector-maven-plugin</artifactId>
+                <version>@project.version@</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>fetch-tls-context</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <region>us-east-1</region>
+                    <failOnMissingFile>false</failOnMissingFile>
+                    <files>
+                        <file>
+                            <bucket>fake-bucket-does-not-exist</bucket>
+                            <key>test/keystore.jks</key>
+                            <targetFileName>certificates/keystore.jks</targetFileName>
+                        </file>
+                    </files>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
