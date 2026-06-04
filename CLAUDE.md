@@ -13,8 +13,10 @@ Git. The full design lives in [idea.md](idea.md) — read it before making struc
 > (objects download as raw bytes — no Base64/binary handling needed). Don't reintroduce Secrets
 > Manager.
 
-> **Status:** Implemented. The plugin builds and unit tests pass (`mvn clean test`). Integration
-> tests against real AWS / a dummy Mule app are not yet wired up (`src/it/`).
+> **Status:** Implemented. The plugin builds and unit tests pass (`mvn clean test`).
+> `maven-invoker-plugin` integration tests are wired up in `src/it/` (`skip-flag`,
+> `local-fake-s3` run with no AWS; `aws-download` runs against real S3 when `-Daws.it.bucket`
+> is set). A LocalStack-backed download IT and a dummy Mule app are still TODO.
 
 ## Project structure
 
@@ -22,17 +24,17 @@ Git. The full design lives in [idea.md](idea.md) — read it before making struc
 tls-maven-plugin/
 ├── pom.xml                                  # packaging = maven-plugin
 ├── src/
-│   ├── main/java/com/yourcompany/maven/
+│   ├── main/java/com/priyan/maven/
 │   │   ├── FetchTlsContextMojo.java          # @Mojo(name="fetch-tls-context")
 │   │   ├── config/S3FileConfig.java           # <file> element binding (bucket/key/target)
 │   │   └── aws/
 │   │       ├── S3ObjectResolver.java          # interface (test seam)
 │   │       ├── AwsS3ObjectResolver.java        # wraps S3Client (SDK v2)
 │   │       └── S3FetchException.java
-│   └── test/java/com/yourcompany/maven/
+│   └── test/java/com/priyan/maven/
 │       ├── FetchTlsContextMojoTest.java       # Mojo behavior (fake resolver)
 │       └── aws/AwsS3ObjectResolverTest.java    # download/exception mapping (mocked client)
-└── src/it/                                   # integration tests (not yet added)
+└── src/it/                                   # maven-invoker integration tests (skip-flag, local-fake-s3, aws-download)
 ```
 
 ## Key technical conventions

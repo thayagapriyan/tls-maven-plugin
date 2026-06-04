@@ -1,13 +1,13 @@
-package com.yourcompany.maven;
+package com.priyan.maven;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.yourcompany.maven.aws.S3FetchException;
-import com.yourcompany.maven.aws.S3ObjectResolver;
-import com.yourcompany.maven.config.S3FileConfig;
+import com.priyan.maven.aws.S3FetchException;
+import com.priyan.maven.aws.S3ObjectResolver;
+import com.priyan.maven.config.S3FileConfig;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;

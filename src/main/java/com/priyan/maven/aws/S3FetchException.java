@@ -1,4 +1,4 @@
-package com.yourcompany.maven.aws;
+package com.priyan.maven.aws;
 
 /** Thrown when a TLS file cannot be downloaded from S3. Never carries file contents. */
 public class S3FetchException extends RuntimeException {

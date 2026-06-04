@@ -1,11 +1,11 @@
-package com.yourcompany.maven.aws;
+package com.priyan.maven.aws;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import com.yourcompany.maven.config.S3FileConfig;
+import com.priyan.maven.config.S3FileConfig;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

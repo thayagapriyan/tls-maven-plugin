@@ -35,7 +35,7 @@ Add the plugin to your application's `pom.xml`:
 
 ```xml
 <plugin>
-    <groupId>com.yourcompany.maven</groupId>
+    <groupId>com.priyan.maven</groupId>
     <artifactId>aws-tls-injector-maven-plugin</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <executions>

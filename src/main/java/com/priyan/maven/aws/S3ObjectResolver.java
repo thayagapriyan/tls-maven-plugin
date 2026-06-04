@@ -1,6 +1,6 @@
-package com.yourcompany.maven.aws;
+package com.priyan.maven.aws;
 
-import com.yourcompany.maven.config.S3FileConfig;
+import com.priyan.maven.config.S3FileConfig;
 
 /**
  * Resolves the raw bytes of a TLS file from S3. Implemented against the AWS SDK in production

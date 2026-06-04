@@ -1,6 +1,6 @@
-package com.yourcompany.maven.aws;
+package com.priyan.maven.aws;
 
-import com.yourcompany.maven.config.S3FileConfig;
+import com.priyan.maven.config.S3FileConfig;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
@@ -21,7 +21,7 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
  * a named profile when {@code awsProfile} is set, otherwise the {@link DefaultCredentialsProvider}
  * chain (env vars, SSO, IAM instance/task roles, GitHub OIDC, ...). The plugin stores no keys.
  *
- * <p>Never logs object contents — callers receive bytes; failures throw with the bucket/key only.
+ * <p>Never logs object contents â€” callers receive bytes; failures throw with the bucket/key only.
  */
 public class AwsS3ObjectResolver implements S3ObjectResolver {
 

@@ -1,9 +1,9 @@
-package com.yourcompany.maven;
+package com.priyan.maven;
 
-import com.yourcompany.maven.aws.AwsS3ObjectResolver;
-import com.yourcompany.maven.aws.S3FetchException;
-import com.yourcompany.maven.aws.S3ObjectResolver;
-import com.yourcompany.maven.config.S3FileConfig;
+import com.priyan.maven.aws.AwsS3ObjectResolver;
+import com.priyan.maven.aws.S3FetchException;
+import com.priyan.maven.aws.S3ObjectResolver;
+import com.priyan.maven.config.S3FileConfig;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,7 +21,7 @@ import org.apache.maven.plugins.annotations.Parameter;
  *
  * <p>Binds by default to the {@code generate-resources} phase, before packaging.
  *
- * <p>AWS credentials are resolved from the environment (profile, IAM role, OIDC, env vars) — the
+ * <p>AWS credentials are resolved from the environment (profile, IAM role, OIDC, env vars) â€” the
  * plugin never accepts or stores raw access keys.
  */
 @Mojo(name = "fetch-tls-context",
@@ -36,7 +36,7 @@ public class FetchTlsContextMojo extends AbstractMojo {
     /**
      * Named AWS profile for local credentials. When unset, the {@code DefaultCredentialsProvider}
      * chain is used (IAM roles, GitHub OIDC, ECS task roles, env vars, etc.). This is a non-secret
-     * label only — never put access keys in the build.
+     * label only â€” never put access keys in the build.
      */
     @Parameter(property = "tls.awsProfile")
     private String awsProfile;
@@ -95,7 +95,7 @@ public class FetchTlsContextMojo extends AbstractMojo {
             Path target = resolveTarget(file);
             Files.createDirectories(target.getParent());
             Files.write(target, bytes);
-            // Never log file material — only source location, path and size.
+            // Never log file material â€” only source location, path and size.
             getLog().info("Downloaded " + file.location() + " (" + bytes.length
                     + " bytes) -> " + target);
         } catch (S3FetchException e) {
@@ -134,7 +134,7 @@ public class FetchTlsContextMojo extends AbstractMojo {
         if (failOnMissingFile) {
             throw new MojoExecutionException(message, cause);
         }
-        getLog().warn(message + " — continuing (failOnMissingFile=false): " + cause.getMessage());
+        getLog().warn(message + " â€” continuing (failOnMissingFile=false): " + cause.getMessage());
     }
 
     // --- Test support -----------------------------------------------------------------------

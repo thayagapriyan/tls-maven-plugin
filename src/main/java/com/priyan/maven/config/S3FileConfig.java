@@ -1,4 +1,4 @@
-package com.yourcompany.maven.config;
+package com.priyan.maven.config;
 
 /**
  * Describes a single TLS file to download from an S3 bucket and where to write it locally.
@@ -14,7 +14,7 @@ package com.yourcompany.maven.config;
  * }</pre>
  *
  * <p>S3 objects are returned as raw bytes, so {@code .jks} and {@code .pem} files both stream
- * straight to disk — no Base64 decoding or binary/string distinction is needed.
+ * straight to disk â€” no Base64 decoding or binary/string distinction is needed.
  */
 public class S3FileConfig {
 

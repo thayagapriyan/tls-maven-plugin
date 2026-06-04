@@ -76,7 +76,7 @@ developers will use it:
 
 ```xml
 <plugin>
-    <groupId>com.yourcompany.maven</groupId>
+    <groupId>com.priyan.maven</groupId>
     <artifactId>aws-tls-injector-maven-plugin</artifactId>
     <version>1.0.0</version>
     <executions>
@@ -185,5 +185,7 @@ label. A future enhancement could read static keys from a Maven `settings.xml` `
 - **Phase 1:** Bootstrap the Maven Plugin project (Java + `maven-plugin-plugin` packaging). ✅
 - **Phase 2:** Integrate AWS SDK v2 S3 and implement the credential/authentication logic. ✅
 - **Phase 3:** Implement object download + file-stream writing into the output directory. ✅
-- **Phase 4:** Add unit + harness tests; integration-test against S3 (LocalStack) + a Mule app.
+- **Phase 4:** Add unit + harness tests; integration-test against S3 (LocalStack) + a Mule app. ✅
+  Unit tests and `maven-invoker-plugin` integration tests (`src/it/`) are wired up; a real
+  LocalStack/AWS download IT and a dummy Mule app remain to fully close this out.
 - **Phase 5:** Publish to an internal/Maven Central repository and document usage in `README.md`.

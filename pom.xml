@@ -4,14 +4,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.yourcompany.maven</groupId>
+    <groupId>com.priyan.maven</groupId>
     <artifactId>aws-tls-injector-maven-plugin</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
-    <name>AWS Secrets Manager TLS Context Injector Maven Plugin</name>
+    <name>AWS S3 TLS Context Injector Maven Plugin</name>
     <description>
-        Fetches TLS keystore/truststore files from AWS Secrets Manager at build time and writes
+        Fetches TLS keystore/truststore files from an AWS S3 bucket at build time and writes
         them into the Maven build output directory, so certificates never get committed to VCS.
     </description>
 
