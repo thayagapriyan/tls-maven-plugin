@@ -4,6 +4,7 @@ import com.priyan.maven.aws.AwsS3ObjectResolver;
 import com.priyan.maven.aws.S3FetchException;
 import com.priyan.maven.aws.S3ObjectResolver;
 import com.priyan.maven.config.S3FileConfig;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,7 +44,7 @@ public class FetchTlsContextMojo extends AbstractMojo {
 
     /** Base directory the files are written under. */
     @Parameter(defaultValue = "${project.build.outputDirectory}", required = true)
-    private Path outputDirectory;
+    private File outputDirectory;
 
     /** Fail the build if a file cannot be downloaded. */
     @Parameter(property = "tls.failOnMissingFile", defaultValue = "true")
@@ -108,7 +109,7 @@ public class FetchTlsContextMojo extends AbstractMojo {
     }
 
     private Path resolveTarget(S3FileConfig file) {
-        Path base = outputDirectory.normalize();
+        Path base = outputDirectory.toPath().normalize();
         Path target = base.resolve(file.getTargetFileName()).normalize();
         if (!target.startsWith(base)) {
             throw new IllegalArgumentException("targetFileName '" + file.getTargetFileName()
@@ -144,7 +145,7 @@ public class FetchTlsContextMojo extends AbstractMojo {
     }
 
     void setOutputDirectory(Path outputDirectory) {
-        this.outputDirectory = outputDirectory;
+        this.outputDirectory = outputDirectory.toFile();
     }
 
     void setFiles(List<S3FileConfig> files) {
